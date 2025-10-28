@@ -1,23 +1,21 @@
 # 🛍️ Commerce Concierge - AI-Powered Shopping Assistant
 
-[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![OpenAI](https://img.shields.io/badge/OpenAI-412991?style=flat&logo=openai&logoColor=white)](https://openai.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+Access your personal assistant here - [Try Me](https://shopping-assistant-eta.vercel.app/)
 
-An intelligent shopping assistant that enables semantic product search using both text and images. Built with TypeScript, Express, OpenAI embeddings, and CLIP vision models.
-
-![Demo](https://img.shields.io/badge/Live%20Demo-Coming%20Soon-brightgreen)
+An intelligent shopping assistant that enables semantic product search using both text and images. Built with TypeScript, Express, OpenAI embeddings, and CLIP vision models. 
+Drop in a text description or attach an image (file/doc/URL) and I will help you get the best for you.
 
 ## ✨ Features
 
-- 🤖 **AI-Powered Intent Recognition** - Automatically understands user queries
-- 💬 **Conversational Interface** - Natural chat-based product search
-- 🖼️ **Image Search** - Upload photos or provide URLs to find similar products
-- 📝 **Text Search** - Semantic search using natural language
-- 🎯 **Smart Query Processing** - Cleans and optimizes search queries
-- ⚡ **Real-time Results** - Fast semantic similarity search
-- 🎨 **Beautiful UI** - Responsive chat interface with product cards
+- **AI-Powered Intent Recognition** - Automatically understands user queries
+- **Conversational Interface** - Natural chat-based product search
+- **Image Search** - Upload photos or provide URLs to find similar products
+- **Text Search** - Semantic search using natural language
+- **Smart Query Processing** - Cleans and optimizes search queries
+- **Real-time Results** - Fast semantic similarity search
+- **Beautiful UI** - Responsive chat interface with product cards
+- **Hybrid search** -  (text + image combined) Show me shirts below $50
+- **Price/rating filters** - Show me shirts below $50
 
 ## 🏗️ Architecture
 
@@ -64,7 +62,6 @@ npm install
 ```env
 OPENAI_API_KEY=sk-proj-your-openai-api-key-here
 DATABASE_URL=postgresql://user:pass@host:5432/dbname
-PORT=3000
 ```
 
 4. **Run development server**
@@ -204,7 +201,7 @@ FormData {
 |----------|-------------|----------|
 | `OPENAI_API_KEY` | OpenAI API key | ✅ |
 | `DATABASE_URL` | PostgreSQL connection string | ✅ |
-| `PORT` | Server port (default: 3000) | ❌ |
+
 
 ### Vercel Configuration
 
@@ -240,13 +237,13 @@ Create `vercel.json`:
 
 ## 🛡️ Security
 
-- ✅ Request deduplication (2s window)
-- ✅ Input validation
-- ✅ File type checking
-- ✅ Environment variable protection
-- ✅ Temporary file cleanup
-- ✅ Error handling
-- ✅ SQL injection prevention (parameterized queries)
+-  Request deduplication (2s window)
+-  Input validation
+-  File type checking
+-  Environment variable protection
+-  Temporary file cleanup
+-  Error handling
+-  SQL injection prevention (parameterized queries)
 
 ## 🚢 Deployment
 
@@ -293,31 +290,10 @@ npm run build
 npm start
 ```
 
-## 🐛 Troubleshooting
 
-### "No request ID provided"
-- Ensure frontend sends `requestId` in FormData
-- Check browser console for errors
-
-### "Different vector dimensions"
-- Text queries use 384d embeddings
-- Image queries use 512d embeddings
-- Verify database columns exist
-
-### CLIP model download fails
-- Check internet connection
-- Model downloads to `~/.cache/huggingface/`
-- Requires ~350MB on first run
-
-### Vercel deployment fails
-- Ensure all environment variables are set
-- Check build logs for errors
-- Verify database is accessible from Vercel
 
 ## 📈 Roadmap
 
-- [ ] Hybrid search (text + image combined)
-- [ ] Price/rating filters
 - [ ] Pagination
 - [ ] User authentication
 - [ ] Search history
@@ -335,15 +311,11 @@ Contributions welcome! Please:
 4. Push to branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
-
-MIT License - see [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-Your Name - [@yourtwitter](https://twitter.com/yourtwitter)
+Your Name - [@linkedin](https://www.linkedin.com/in/prakhar-gangwar/)
 
-Project Link: [https://github.com/yourusername/commerce-concierge](https://github.com/yourusername/commerce-concierge)
 
 ## 🙏 Acknowledgments
 
@@ -355,11 +327,9 @@ Project Link: [https://github.com/yourusername/commerce-concierge](https://githu
 
 ## 📞 Support
 
-- 📧 Email: your.email@example.com
-- 💬 Issues: [GitHub Issues](https://github.com/yourusername/commerce-concierge/issues)
-- 📖 Documentation: [Wiki](https://github.com/yourusername/commerce-concierge/wiki)
+- 📧 Email: prakhar.gangwar08@gmail.com
 
 ---
 
-Made with ❤️ and AI
+Made with ❤️ and Claude
 =======
