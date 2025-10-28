@@ -575,7 +575,12 @@ chatForm.addEventListener('submit', async (e) => {
   }
   
   const message = messageInput.value.trim();
-  if (!message && !currentImage) return;
+  
+  // Allow submission if either message OR image exists
+  if (!message && !currentImage) {
+    console.log('No message or image provided');
+    return;
+  }
 
   isSubmitting = true;
   sendButton.disabled = true;
@@ -584,9 +589,10 @@ chatForm.addEventListener('submit', async (e) => {
   // Generate unique request ID
   requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-  // Add user message
-  addMessage(message || '📷 Sent an image', true, currentImage ? imagePreview.src : null);
-  
+  // Add user message (show "Sent an image" if no text)
+  const displayMessage = message || '📷 Searching by image...';
+  addMessage(displayMessage, true, currentImage ? imagePreview.src : null);
+    
   // Clear input
   messageInput.value = '';
   messageInput.style.height = 'auto';

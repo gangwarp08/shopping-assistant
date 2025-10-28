@@ -15,10 +15,8 @@ export async function handleSearchRequest(
   image?: string
 ): Promise<SearchResponse> {
   
-  // Step 1: Classify intent
   const intentResult = await classifyIntent(message, !!image, image);
   
-  // Step 2: Handle based on intent
   switch (intentResult.intent) {
     case 'general_talk':
       console.log('💬 General conversation detected');
@@ -30,7 +28,6 @@ export async function handleSearchRequest(
     case 'image_rec':
       console.log('🖼️ Image search detected');
       
-      // Get image data (either from attachment or URL)
       let imageData = image;
       if (!imageData && intentResult.imageUrl) {
         imageData = await fetchImageFromUrl(intentResult.imageUrl);
@@ -49,7 +46,12 @@ export async function handleSearchRequest(
         query: intentResult.cleanedQuery
       });
       
-      const imageProducts = await searchProducts(imageVector.vector, true);
+      const imageProducts = await searchProducts(
+        imageVector.vector, 
+        true, 
+        5,
+        intentResult.priceFilter
+      );
       return {
         type: 'products',
         data: imageProducts
@@ -58,14 +60,18 @@ export async function handleSearchRequest(
     case 'text_rec':
       console.log('📝 Text search detected');
       
-      // Use cleaned query for better results
       const textEmbedding = await getTextEmbedding(intentResult.cleanedQuery);
       const textVector = convertToPostgresVector({
         data: [{ embedding: textEmbedding }],
         query: intentResult.cleanedQuery
       });
       
-      const textProducts = await searchProducts(textVector.vector, false);
+      const textProducts = await searchProducts(
+        textVector.vector, 
+        false, 
+        5,
+        intentResult.priceFilter
+      );
       return {
         type: 'products',
         data: textProducts

@@ -18,9 +18,36 @@ export interface Product {
   similarity: number;
 }
 
-export async function searchProducts(vectorString: string, isImageSearch: boolean = false, limit: number = 5): Promise<Product[]> {
-  // Use different embedding column based on search type
+export interface SearchFilters {
+  minPrice?: number;
+  maxPrice?: number;
+}
+
+export async function searchProducts(
+  vectorString: string, 
+  isImageSearch: boolean = false, 
+  limit: number = 5,
+  filters?: SearchFilters
+): Promise<Product[]> {
+  
   const embeddingColumn = isImageSearch ? 'image_embedding' : 'text_embedding';
+  
+  // Build WHERE clause for price filters
+  let whereClause = '';
+  const queryParams: any[] = [vectorString, limit];
+  let paramIndex = 3;
+  
+  if (filters?.minPrice !== undefined) {
+    whereClause += ` AND price >= $${paramIndex}`;
+    queryParams.push(filters.minPrice);
+    paramIndex++;
+  }
+  
+  if (filters?.maxPrice !== undefined) {
+    whereClause += ` AND price <= $${paramIndex}`;
+    queryParams.push(filters.maxPrice);
+    paramIndex++;
+  }
   
   const query = `
     SELECT
@@ -32,11 +59,18 @@ export async function searchProducts(vectorString: string, isImageSearch: boolea
       price::float AS price,
       1 - (${embeddingColumn} <=> $1::vector) AS similarity
     FROM catalog_items
+    WHERE 1=1${whereClause}
     ORDER BY ${embeddingColumn} <=> $1::vector
     LIMIT $2
   `;
 
-  const result = await pool.query(query, [vectorString, limit]);
+  console.log('🔍 Database query with filters:', { 
+    isImageSearch, 
+    filters,
+    whereClause 
+  });
+
+  const result = await pool.query(query, queryParams);
   
   return result.rows.map(row => ({
     ...row,

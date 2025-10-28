@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { extractPriceFilter, cleanQueryFromPriceFilter, PriceFilter } from './priceFilterService';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -9,6 +10,7 @@ export interface IntentResult {
   cleanedQuery: string;
   conversationResponse?: string;
   imageUrl?: string;
+  priceFilter?: PriceFilter;
 }
 
 export async function classifyIntent(
@@ -17,7 +19,32 @@ export async function classifyIntent(
   imageData?: string
 ): Promise<IntentResult> {
   
-  // Build the classification prompt
+  console.log('📊 Classification input:', { 
+    userMessage, 
+    hasImage, 
+    hasImageData: !!imageData 
+  });
+  
+  // Extract price filter first
+  const priceFilter = extractPriceFilter(userMessage);
+  const queryWithoutPrice = priceFilter.hasFilter 
+    ? cleanQueryFromPriceFilter(userMessage) 
+    : userMessage;
+  
+  console.log('💰 Price filter result:', priceFilter);
+  console.log('📝 Query after price removal:', queryWithoutPrice);
+  
+  // If only image, no text
+  if (!userMessage && hasImage) {
+    console.log('🖼️ Image-only search detected');
+    return {
+      intent: 'image_rec',
+      cleanedQuery: 'find similar items',
+      priceFilter: priceFilter.hasFilter ? priceFilter : undefined
+    };
+  }
+  
+  
   const systemPrompt = `You are a shopping assistant intent classifier. Analyze the user's message and determine:
 
 1. Intent classification:
@@ -25,9 +52,9 @@ export async function classifyIntent(
    - "text_rec": requests to recommend, compare, or find products using text descriptions
    - "image_rec": user provided an image OR text explicitly mentions "like this photo", "find similar" with image context
 
-2. Extract ONLY the product-relevant description (remove fluff, greetings, unnecessary words)
+2. Extract ONLY the product-relevant description (remove fluff, greetings, unnecessary words, price mentions)
 
-3. Extract image URL if mentioned in text (look for URLs ending in .jpg, .png, .jpeg, or image hosting sites)
+3. Extract image URL if mentioned in text
 
 Respond in JSON format:
 {
@@ -36,7 +63,7 @@ Respond in JSON format:
   "imageUrl": "url if found in text, otherwise null"
 }`;
 
-  const userPrompt = `User message: "${userMessage}"
+  const userPrompt = `User message: "${queryWithoutPrice}"
 Has attached image: ${hasImage ? 'Yes' : 'No'}`;
 
   try {
@@ -52,24 +79,23 @@ Has attached image: ${hasImage ? 'Yes' : 'No'}`;
 
     const result = JSON.parse(response.choices[0].message.content || '{}');
     
-    // Determine final intent
     let finalIntent = result.intent;
     let finalImageUrl = result.imageUrl;
     
-    // Override: if image is attached, it's image_rec
     if (hasImage || imageData) {
       finalIntent = 'image_rec';
     }
     
-    // If intent was classified as image_rec but no image, check for URL
     if (finalIntent === 'image_rec' && !hasImage && result.imageUrl) {
       finalImageUrl = result.imageUrl;
     }
     
     console.log(`🎯 Intent classified: ${finalIntent}`);
     console.log(`📝 Cleaned query: ${result.cleanedQuery}`);
+    if (priceFilter.hasFilter) {
+      console.log(`💰 Price filter: $${priceFilter.minPrice || 0} - $${priceFilter.maxPrice || '∞'}`);
+    }
     
-    // Generate conversation response if general_talk
     let conversationResponse: string | undefined;
     if (finalIntent === 'general_talk') {
       conversationResponse = await generateConversationResponse(userMessage);
@@ -77,22 +103,24 @@ Has attached image: ${hasImage ? 'Yes' : 'No'}`;
     
     return {
       intent: finalIntent,
-      cleanedQuery: result.cleanedQuery || userMessage,
+      cleanedQuery: result.cleanedQuery || queryWithoutPrice,
       conversationResponse,
-      imageUrl: finalImageUrl
+      imageUrl: finalImageUrl,
+      priceFilter: priceFilter.hasFilter ? priceFilter : undefined
     };
     
   } catch (error) {
     console.error('Error classifying intent:', error);
-    // Default fallback
     return {
       intent: hasImage ? 'image_rec' : 'text_rec',
-      cleanedQuery: userMessage,
+      cleanedQuery: queryWithoutPrice,
       conversationResponse: undefined,
-      imageUrl: undefined
+      imageUrl: undefined,
+      priceFilter: priceFilter.hasFilter ? priceFilter : undefined
     };
   }
 }
+
 
 async function generateConversationResponse(userMessage: string): Promise<string> {
   const systemPrompt = `You are "Commerce Concierge", a friendly shopping assistant. Follow these rules:
