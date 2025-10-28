@@ -72,8 +72,9 @@ export async function getImageEmbedding(imageData: string): Promise<number[]> {
     // Get image embeddings
     const { image_embeds } = await visionModel(imageInputs);
     
-    // Convert to array
-    const embedding = Array.from(image_embeds.data);
+    // Convert to array with explicit type casting
+    const embeddingData = image_embeds.data;
+    const embedding: number[] = Array.prototype.slice.call(embeddingData).map((x: any) => Number(x));
     
     console.log(`📊 Image embedding dimensions: ${embedding.length}`);
     
