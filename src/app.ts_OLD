@@ -1,0 +1,80 @@
+import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import fetch from 'node-fetch';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
+
+app.use(express.json());
+app.use(express.static('public'));
+
+const WEBHOOK_URL = 'https://pgangwar.app.n8n.cloud/webhook-test/af206cd1-65e3-4b0f-9749-55ed401c3567';
+
+// Main route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// API endpoint to handle chat messages
+app.post('/api/chat', upload.single('image'), async (req, res) => {
+  try {
+    const { message } = req.body;
+    
+    console.log('Received message:', message, 'Has image:', !!req.file);
+    
+    let payload: any = {
+      message
+    };
+
+    // Handle image upload
+    if (req.file) {
+      const base64Image = req.file.buffer.toString('base64');
+      const mimeType = req.file.mimetype;
+      payload.image = `data:${mimeType};base64,${base64Image}`;
+    }
+
+    console.log('Sending to webhook:', JSON.stringify({ ...payload, image: payload.image ? '[BASE64_DATA]' : undefined }, null, 2));
+
+    // Send to n8n webhook
+    const response = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload)
+    });
+
+    console.log('Webhook response status:', response.status);
+    
+    const textResponse = await response.text();
+    console.log('Webhook raw response:', textResponse);
+
+    let data;
+    try {
+      data = JSON.parse(textResponse);
+    } catch (e) {
+      console.error('Failed to parse response:', textResponse);
+      return res.json({ 
+        reply: textResponse || "I received your message but got an unexpected response. Please try again!"
+      });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error:', error);
+    res.status(500).json({ 
+      reply: "Sorry, I'm having trouble connecting right now. Please try again!" 
+    });
+  }
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Shopping Assistant Chatbot running on http://localhost:${PORT}`);
+});

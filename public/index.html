@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shopping Assistant Chat</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .chat-container {
+      width: 100%;
+      max-width: 800px;
+      height: 90vh;
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .chat-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .chat-header h1 {
+      font-size: 1.5rem;
+      margin-bottom: 5px;
+    }
+
+    .chat-header p {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    .message {
+      display: flex;
+      margin-bottom: 16px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message.bot {
+      justify-content: flex-start;
+    }
+
+    .message-content {
+      max-width: 70%;
+      padding: 12px 16px;
+      border-radius: 18px;
+      word-wrap: break-word;
+    }
+
+    .message.user .message-content {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border-bottom-right-radius: 4px;
+    }
+
+    .message.bot .message-content {
+      background: white;
+      color: #333;
+      border-bottom-left-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .message-image {
+      max-width: 200px;
+      border-radius: 12px;
+      margin-top: 8px;
+      display: block;
+    }
+
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      padding: 12px 16px;
+      background: white;
+      border-radius: 18px;
+      width: fit-content;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .typing-indicator span {
+      height: 8px;
+      width: 8px;
+      background: #999;
+      border-radius: 50%;
+      display: inline-block;
+      margin: 0 2px;
+      animation: bounce 1.4s infinite ease-in-out;
+    }
+
+    .typing-indicator span:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+
+    @keyframes bounce {
+      0%, 80%, 100% {
+        transform: scale(0);
+      }
+      40% {
+        transform: scale(1);
+      }
+    }
+
+    .chat-input-area {
+      padding: 20px;
+      background: white;
+      border-top: 1px solid #e0e0e0;
+    }
+
+    .image-preview-container {
+      display: none;
+      margin-bottom: 12px;
+      position: relative;
+    }
+
+    .image-preview-container.active {
+      display: block;
+    }
+
+    .image-preview {
+      max-width: 150px;
+      max-height: 150px;
+      border-radius: 8px;
+      object-fit: cover;
+    }
+
+    .remove-image {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #ff4444;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+    }
+
+    .input-wrapper {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+    }
+
+    .input-container {
+      flex: 1;
+      position: relative;
+    }
+
+    #messageInput {
+      width: 100%;
+      padding: 12px 50px 12px 16px;
+      border: 2px solid #e0e0e0;
+      border-radius: 24px;
+      font-size: 15px;
+      resize: none;
+      font-family: inherit;
+      max-height: 120px;
+      transition: border-color 0.3s;
+    }
+
+    #messageInput:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .attach-button {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #999;
+      transition: color 0.3s;
+    }
+
+    .attach-button:hover {
+      color: #667eea;
+    }
+
+    #imageInput {
+      display: none;
+    }
+
+    .send-button {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+    }
+
+    .send-button:hover:not(:disabled) {
+      transform: scale(1.1);
+    }
+
+    .send-button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .welcome-message {
+      text-align: center;
+      padding: 40px 20px;
+      color: #999;
+    }
+
+    .welcome-message h2 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+      color: #667eea;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #888;
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: #555;
+    }
+
+    /* Product Cards Styles */
+    .product-cards-container {
+      max-width: 100% !important;
+      padding: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+    }
+
+    .products-header {
+      font-weight: 600;
+      color: #667eea;
+      margin-bottom: 16px;
+      font-size: 16px;
+      padding: 0 4px;
+    }
+
+    .products-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .product-card {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+
+    .product-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    .product-card-image {
+      width: 100%;
+      height: 180px;
+      object-fit: contain;
+      background: #f9f9f9;
+      padding: 12px;
+    }
+
+    .product-card-info {
+      padding: 12px;
+    }
+
+    .similarity-tag {
+      display: inline-block;
+      background: #e8f5e9;
+      color: #2e7d32;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .product-card-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      height: 36px;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      line-height: 1.4;
+    }
+
+    .product-card-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .product-card-price {
+      font-size: 18px;
+      font-weight: 700;
+      color: #667eea;
+    }
+
+    .product-card-stars {
+      color: #ffa500;
+      font-size: 12px;
+    }
+
+    .product-card-link {
+      display: block;
+      text-align: center;
+      padding: 8px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+
+    .product-card-link:hover {
+      opacity: 0.9;
+    }
+
+    @media (max-width: 600px) {
+      .products-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="chat-header">
+      <h1>🛍️ Shopping Assistant</h1>
+      <p>Ask me anything about products you're looking for!</p>
+    </div>
+
+    <div class="chat-messages" id="chatMessages">
+      <div class="welcome-message">
+        <h2>Welcome!</h2>
+        <p>Tell me what you're shopping for, or upload an image of a product you like.</p>
+      </div>
+    </div>
+
+    <div class="chat-input-area">
+      <div class="image-preview-container" id="imagePreviewContainer">
+        <img id="imagePreview" class="image-preview" alt="Preview">
+        <button class="remove-image" id="removeImage">×</button>
+      </div>
+      
+      <form id="chatForm" class="input-wrapper">
+        <div class="input-container">
+          <textarea 
+            id="messageInput" 
+            placeholder="Type your message..." 
+            rows="1"
+            required
+          ></textarea>
+          <button type="button" class="attach-button" id="attachButton">📎</button>
+          <input type="file" id="imageInput" accept="image/*">
+        </div>
+        <button type="submit" class="send-button" id="sendButton">➤</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const chatMessages = document.getElementById('chatMessages');
+    const chatForm = document.getElementById('chatForm');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+    const imageInput = document.getElementById('imageInput');
+    const attachButton = document.getElementById('attachButton');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const removeImage = document.getElementById('removeImage');
+
+    let currentImage = null;
+
+    // Auto-resize textarea
+    messageInput.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+    });
+
+    // Handle image attachment
+    attachButton.addEventListener('click', () => {
+      imageInput.click();
+    });
+
+    imageInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        currentImage = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          imagePreview.src = e.target.result;
+          imagePreviewContainer.classList.add('active');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    removeImage.addEventListener('click', () => {
+      currentImage = null;
+      imageInput.value = '';
+      imagePreviewContainer.classList.remove('active');
+    });
+
+    // Add message to chat
+    function addMessage(text, isUser, imageUrl = null) {
+      const welcomeMessage = chatMessages.querySelector('.welcome-message');
+      if (welcomeMessage) {
+        welcomeMessage.remove();
+      }
+
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'message-content';
+      contentDiv.textContent = text;
+      
+      if (imageUrl && isUser) {
+        const img = document.createElement('img');
+        img.src = imageUrl;
+        img.className = 'message-image';
+        contentDiv.appendChild(img);
+      }
+      
+      messageDiv.appendChild(contentDiv);
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Add product cards to chat
+    function addProductCards(products) {
+      const welcomeMessage = chatMessages.querySelector('.welcome-message');
+      if (welcomeMessage) {
+        welcomeMessage.remove();
+      }
+
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message bot';
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'message-content product-cards-container';
+      
+      contentDiv.innerHTML = `
+        <div class="products-header">Found ${products.length} products for you! 🛍️</div>
+        <div class="products-grid">
+          ${products.map(product => `
+            <div class="product-card">
+              <img src="${product.img}" alt="${product.title}" class="product-card-image" onerror="this.src='https://via.placeholder.com/200?text=No+Image'">
+              <div class="product-card-info">
+                <div class="similarity-tag">${Math.round(product.similarity * 100)}% match</div>
+                <h4 class="product-card-title">${product.title}</h4>
+                <div class="product-card-meta">
+                  <span class="product-card-price">${product.price.toFixed(2)}</span>
+                  ${product.stars > 0 ? `<span class="product-card-stars">⭐ ${product.stars}</span>` : '<span class="product-card-stars">New</span>'}
+                </div>
+                <a href="${product.product}" target="_blank" class="product-card-link">View on Amazon →</a>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      
+      messageDiv.appendChild(contentDiv);
+      chatMessages.appendChild(messageDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Show typing indicator
+    function showTyping() {
+      const typingDiv = document.createElement('div');
+      typingDiv.className = 'message bot';
+      typingDiv.id = 'typingIndicator';
+      
+      const typingContent = document.createElement('div');
+      typingContent.className = 'typing-indicator';
+      typingContent.innerHTML = '<span></span><span></span><span></span>';
+      
+      typingDiv.appendChild(typingContent);
+      chatMessages.appendChild(typingDiv);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function hideTyping() {
+      const typing = document.getElementById('typingIndicator');
+      if (typing) {
+        typing.remove();
+      }
+    }
+
+    let isSubmitting = false;
+let requestId = null;
+
+chatForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  // Prevent double submission
+  if (isSubmitting) {
+    console.log('Already submitting, ignoring...');
+    return;
+  }
+  
+  const message = messageInput.value.trim();
+  if (!message && !currentImage) return;
+
+  isSubmitting = true;
+  sendButton.disabled = true;
+  messageInput.disabled = true;
+  
+  // Generate unique request ID
+  requestId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+  // Add user message
+  addMessage(message || '📷 Sent an image', true, currentImage ? imagePreview.src : null);
+  
+  // Clear input
+  messageInput.value = '';
+  messageInput.style.height = 'auto';
+  
+  // Prepare form data
+  const formData = new FormData();
+  formData.append('message', message);
+  formData.append('requestId', requestId); // Add this line
+  if (currentImage) {
+    formData.append('image', currentImage);
+}
+
+
+  // Clear image preview
+  currentImage = null;
+  imageInput.value = '';
+  imagePreviewContainer.classList.remove('active');
+
+  // Show typing indicator
+  showTyping();
+
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      body: formData  
+    });
+
+    console.log('Response status:', response.status);
+    
+    // Ignore duplicate responses (status 429)
+    if (response.status === 429) {
+      console.log('Duplicate request detected, ignoring response');
+      return;
+    }
+    
+    const data = await response.json();
+    console.log('Response data:', data);
+    
+    hideTyping();
+    
+    if (Array.isArray(data) && data.length > 0 && data[0].id) {
+      addProductCards(data);
+    } else if (data.reply) {
+      addMessage(data.reply, false);
+    } else if (data.message) {
+      addMessage(data.message, false);
+    } else if (typeof data === 'string') {
+      addMessage(data, false);
+    } else {
+      addMessage(JSON.stringify(data, null, 2), false);
+    }
+  } catch (error) {
+    console.error('Fetch error:', error);
+    hideTyping();
+    addMessage("Sorry, I'm having trouble connecting right now. Please try again!", false);
+  } finally {
+    isSubmitting = false;
+    sendButton.disabled = false;
+    messageInput.disabled = false;
+    messageInput.focus();
+  }
+});
+    // Focus input on load
+    messageInput.focus();
+  </script>
+</body>
+</html>
