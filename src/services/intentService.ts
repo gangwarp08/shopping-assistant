@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { extractPriceFilter, cleanQueryFromPriceFilter, PriceFilter } from './priceFilterService';
+import { extractPriceFilter, cleanQueryFromPriceFilter, PriceFilter } from './priceFilterService.ts';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
